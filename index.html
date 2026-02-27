@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Anglo-Saxon vs Latinate Dial</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="panel">
+      <header class="title-wrap">
+        <p class="kicker">Live Style Meter</p>
+        <h1>Anglo-Saxon vs Latinate</h1>
+        <p class="subtitle">Analyzes your recent speech and places the needle based on word choice.</p>
+      </header>
+
+      <div class="controls">
+        <button id="toggleButton" class="btn" type="button">Start Listening</button>
+        <label class="window-control" for="windowSeconds">
+          Window (seconds)
+          <input id="windowSeconds" type="number" min="10" max="600" step="5" value="60">
+        </label>
+      </div>
+
+      <p id="status" class="status">Status: idle</p>
+
+      <div class="meter" role="img" aria-label="Dial from Anglo-Saxon to Latinate">
+        <div class="meter-track"></div>
+        <div class="meter-axis">
+          <span>Anglo-Saxon</span>
+          <span>Balanced</span>
+          <span>Latinate</span>
+        </div>
+        <div class="needle-wrap">
+          <div id="needle" class="needle"></div>
+          <div class="pivot"></div>
+        </div>
+      </div>
+
+      <div class="metrics">
+        <div class="metric">
+          <p class="metric-label">Dial Reading</p>
+          <p id="dialReading" class="metric-value">Balanced</p>
+        </div>
+        <div class="metric">
+          <p class="metric-label">Classified Words</p>
+          <p id="wordCount" class="metric-value">0</p>
+        </div>
+      </div>
+
+      <section class="transcript">
+        <p class="transcript-label">Recent Transcript</p>
+        <p id="recentTranscript">No speech captured yet.</p>
+      </section>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>
