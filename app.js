@@ -7,10 +7,16 @@
   const dialReadingEl = document.getElementById("dialReading");
   const wordCountEl = document.getElementById("wordCount");
   const recentTranscriptEl = document.getElementById("recentTranscript");
-  const needleEl = document.getElementById("needle");
+  const barAngloEl = document.getElementById("barAnglo");
+  const barLatinateEl = document.getElementById("barLatinate");
+  const angloCountEl = document.getElementById("angloCount");
+  const latinateCountEl = document.getElementById("latinateCount");
+  const angloWordsEl = document.getElementById("angloWords");
+  const latinateWordsEl = document.getElementById("latinateWords");
 
   const DEFAULT_WINDOW_SECONDS = 60;
   const segments = [];
+  const classifiedWords = [];
   let interimText = "";
   let listening = false;
   let recognition = null;
@@ -113,6 +119,36 @@
     }
   }
 
+  function pruneClassifiedWords() {
+    const cutoff = Date.now() - getWindowMs();
+    while (classifiedWords.length > 0 && classifiedWords[0].timestamp < cutoff && !classifiedWords[0].fading) {
+      const entry = classifiedWords[0];
+      entry.fading = true;
+      entry.el.classList.add("fading");
+      entry.el.addEventListener("transitionend", () => { entry.el.remove(); }, { once: true });
+      setTimeout(() => { entry.el.remove(); }, 700);
+      classifiedWords.shift();
+    }
+  }
+
+  function addClassifiedWord(word, timestamp) {
+    const score = classifyWord(word);
+    if (score.anglo === 0 && score.latinate === 0) return;
+
+    const origin = score.anglo >= score.latinate ? "anglo" : "latinate";
+    const effectiveScore = Math.max(score.anglo, score.latinate);
+
+    const pill = document.createElement("span");
+    pill.className = "word-pill";
+    pill.textContent = word;
+
+    const container = origin === "anglo" ? angloWordsEl : latinateWordsEl;
+    container.appendChild(pill);
+    container.scrollTop = container.scrollHeight;
+
+    classifiedWords.push({ word, origin, score: effectiveScore, timestamp, el: pill, fading: false });
+  }
+
   function tokenize(inputText) {
     return inputText
       .toLowerCase()
@@ -159,22 +195,31 @@
 
   function analyzeRecentSpeech() {
     pruneSegments();
+    pruneClassifiedWords();
 
     const recentText = segments.map((segment) => segment.text).join(" ");
-    const tokens = tokenize(`${recentText} ${interimText}`);
-    const totals = tokens.reduce(
-      (acc, word) => {
-        const score = classifyWord(word);
-        acc.anglo += score.anglo;
-        acc.latinate += score.latinate;
+
+    const totals = classifiedWords.reduce(
+      (acc, entry) => {
+        if (entry.origin === "anglo") acc.anglo += entry.score;
+        else acc.latinate += entry.score;
         return acc;
       },
       { anglo: 0, latinate: 0 }
     );
 
+    // Include interim text for responsiveness without creating persistent pills
+    if (interimText) {
+      tokenize(interimText).forEach((word) => {
+        const s = classifyWord(word);
+        totals.anglo += s.anglo;
+        totals.latinate += s.latinate;
+      });
+    }
+
     const classified = totals.anglo + totals.latinate;
     if (classified < 0.001) {
-      return { balance: 0, label: "Balanced", classifiedWords: 0, transcript: recentText };
+      return { balance: 0, label: "Balanced", classifiedWords: 0, transcript: recentText, angloScore: 0, latinateScore: 0 };
     }
 
     const balance = (totals.latinate - totals.anglo) / classified;
@@ -189,14 +234,24 @@
       balance,
       label,
       classifiedWords: Math.round(classified),
-      transcript: recentText
+      transcript: recentText,
+      angloScore: totals.anglo,
+      latinateScore: totals.latinate
     };
   }
 
   function renderAnalysis() {
     const analysis = analyzeRecentSpeech();
-    const rotationDegrees = analysis.balance * 60;
-    needleEl.style.transform = `translateX(-50%) rotate(${rotationDegrees.toFixed(2)}deg)`;
+    const total = analysis.angloScore + analysis.latinateScore;
+    const angloPct = total > 0 ? (analysis.angloScore / total) * 100 : 0;
+    const latinatePct = total > 0 ? (analysis.latinateScore / total) * 100 : 0;
+
+    barAngloEl.style.height = `${angloPct.toFixed(1)}%`;
+    barLatinateEl.style.height = `${latinatePct.toFixed(1)}%`;
+
+    angloCountEl.textContent = String(classifiedWords.filter((w) => w.origin === "anglo").length);
+    latinateCountEl.textContent = String(classifiedWords.filter((w) => w.origin === "latinate").length);
+
     dialReadingEl.textContent = analysis.label;
     wordCountEl.textContent = String(analysis.classifiedWords);
     recentTranscriptEl.textContent = analysis.transcript || "No speech captured yet.";
@@ -240,10 +295,9 @@
           continue;
         }
         if (result.isFinal) {
-          segments.push({
-            timestamp: Date.now(),
-            text: transcript
-          });
+          const now = Date.now();
+          segments.push({ timestamp: now, text: transcript });
+          tokenize(transcript).forEach((w) => addClassifiedWord(w, now));
           interimText = "";
         } else {
           interimText = transcript;
@@ -284,6 +338,8 @@
     clearTimeout(restartTimer);
     toggleButton.textContent = "Start Listening";
     toggleButton.setAttribute("aria-pressed", "false");
+    classifiedWords.forEach((entry) => entry.el.remove());
+    classifiedWords.length = 0;
     if (recognition) {
       recognition.stop();
     } else {

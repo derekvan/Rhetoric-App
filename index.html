@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Anglo-Saxon vs Latinate Dial</title>
+  <title>Anglo-Saxon vs Latinate</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
@@ -15,7 +15,7 @@
       <header class="title-wrap">
         <p class="kicker">Live Style Meter</p>
         <h1>Anglo-Saxon vs Latinate</h1>
-        <p class="subtitle">Analyzes your recent speech and places the needle based on word choice.</p>
+        <p class="subtitle">Analyzes your recent speech and shows word origin in real time.</p>
       </header>
 
       <div class="controls">
@@ -28,22 +28,28 @@
 
       <p id="status" class="status">Status: idle</p>
 
-      <div class="meter" role="img" aria-label="Dial from Anglo-Saxon to Latinate">
-        <div class="meter-track"></div>
-        <div class="meter-axis">
-          <span>Anglo-Saxon</span>
-          <span>Balanced</span>
-          <span>Latinate</span>
+      <div class="bar-chart" role="img" aria-label="Anglo-Saxon vs Latinate word balance">
+        <div class="bar-column bar-column--anglo">
+          <div class="bar-label">Anglo-Saxon</div>
+          <div class="bar-track">
+            <div id="barAnglo" class="bar-fill"></div>
+          </div>
+          <div class="bar-count"><span id="angloCount">0</span> words</div>
+          <div id="angloWords" class="word-list"></div>
         </div>
-        <div class="needle-wrap">
-          <div id="needle" class="needle"></div>
-          <div class="pivot"></div>
+        <div class="bar-column bar-column--latinate">
+          <div class="bar-label">Latinate</div>
+          <div class="bar-track">
+            <div id="barLatinate" class="bar-fill"></div>
+          </div>
+          <div class="bar-count"><span id="latinateCount">0</span> words</div>
+          <div id="latinateWords" class="word-list"></div>
         </div>
       </div>
 
       <div class="metrics">
         <div class="metric">
-          <p class="metric-label">Dial Reading</p>
+          <p class="metric-label">Balance</p>
           <p id="dialReading" class="metric-value">Balanced</p>
         </div>
         <div class="metric">
